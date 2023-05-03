@@ -18,7 +18,7 @@ async def get_health(session: AsyncSession = Depends(get_session)):
     """Endpoint to check if the API is running smoothly."""
 
     try:
-        asyncio.wait_for(session.execute(select(1)), timeout=1)
+        await asyncio.wait_for(session.execute(select(1)), timeout=1)
     except asyncio.TimeoutError:
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     return {"status": "ok"}
