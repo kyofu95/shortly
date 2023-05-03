@@ -24,5 +24,6 @@ class User(Base):
     login: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
     create_at: Mapped[datetime] = mapped_column(default=func.now())
+    disabled: Mapped[bool] = mapped_column(default=False)
 
     links: Mapped[list["Link"]] = relationship(back_populates="user", lazy="selectin")
