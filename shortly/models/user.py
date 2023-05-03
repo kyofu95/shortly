@@ -1,12 +1,18 @@
 """Contains User database model."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
+# Avoid pylint warnings
+if TYPE_CHECKING:
+    from .link import Link
+
+    func: Callable
 
 
 class User(Base):

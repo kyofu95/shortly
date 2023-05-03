@@ -1,12 +1,18 @@
 """Contains Link database model."""
 
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, func, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
+# Avoid pylint warnings
+if TYPE_CHECKING:
+    from .user import User
+
+    func: Callable
 
 
 class Link(Base):
