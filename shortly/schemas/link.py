@@ -1,9 +1,12 @@
 """This module defines a Pydantic schema for a Link object."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import BaseModel, constr
+
+if TYPE_CHECKING:
+    from .user import UserInDB
 
 
 class LinkBase(BaseModel):
