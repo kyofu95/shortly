@@ -3,18 +3,18 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 if TYPE_CHECKING:
     from .link import LinkInDB, LinkOut
 
 
 class UserBase(BaseModel):
-    login: str
+    login: constr(max_length=50)
 
 
 class UserCreate(UserBase):
-    password: str
+    password: constr(max_length=50)
 
 
 class UserOut(BaseModel):
