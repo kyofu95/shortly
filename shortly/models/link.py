@@ -26,6 +26,7 @@ class Link(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     create_date: Mapped[datetime] = mapped_column(default=func.now())
     expiry_date: Mapped[Optional[datetime]]
+    last_access_date: Mapped[datetime] = mapped_column(default=func.now())
     view_count: Mapped[int]
     disabled: Mapped[bool] = mapped_column(default=False)
 
