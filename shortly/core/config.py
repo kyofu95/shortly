@@ -18,6 +18,10 @@ class AppSettings(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: int
 
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRY: int = 25
+
     class Config:
         case_sensitive = True
         allow_mutation = False
