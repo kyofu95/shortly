@@ -14,7 +14,7 @@ from shortly.core.database import get_session
 from shortly.core.security import Hasher
 from shortly.models.user import User as UserModel
 from shortly.schemas.token import Token, TokenPayload
-from shortly.schemas.user import UserOut
+from shortly.schemas.user import UserInDB
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
@@ -52,7 +52,7 @@ async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-async def get_current_user_from_token(token: str, session: AsyncSession) -> UserOut:
+async def get_current_user_from_token(token: str, session: AsyncSession) -> UserInDB:
     # decode token
     try:
         payload_dict = jwt.decode(token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
@@ -66,10 +66,10 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
-    return UserOut(db_user.dict())
+    return UserInDB(db_user.dict())
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
-) -> UserOut:
+) -> UserInDB:
     return await get_current_user_from_token(token, session)
