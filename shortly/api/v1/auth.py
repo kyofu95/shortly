@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
-from jose.exceptions import ExpiredSignatureError
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,11 +22,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 router = APIRouter(tags=["OAuth2"])
 
 
-@router.post("", response_model=Token)
+@router.post("/token", response_model=Token)
 async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     # verify if user exists
     results = await session.execute(
-        select(UserModel).where((UserModel.login == form.username) & (not UserModel.disabled))
+        select(UserModel).where((UserModel.login == form.username) & (UserModel.disabled.is_(False)))
     )
     db_user = results.scalar()
     if not db_user:
@@ -41,7 +41,7 @@ async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session:
         token_type="access_token",
         exp=datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRY),
         iat=datetime.utcnow(),
-        sub=db_user.id,
+        sub=str(db_user.id),
     )
 
     try:
@@ -57,16 +57,18 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
     try:
         payload_dict = jwt.decode(token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         payload = TokenPayload(**payload_dict)
-    except (ExpiredSignatureError, JWTError) as exc:
+    except (JWTClaimsError, ExpiredSignatureError, JWTError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token") from exc
 
     # verify user
-    results = await session.execute(select(UserModel).where(UserModel.id == payload.sub) & (not UserModel.disabled))
+    results = await session.execute(
+        select(UserModel).where((UserModel.id == int(payload.sub)) & (UserModel.disabled.is_(False)))
+    )
     db_user = results.scalar()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
-    return UserInDB(db_user.dict())
+    return UserInDB(**db_user.dict())
 
 
 async def get_current_user(

@@ -11,7 +11,7 @@ class TokenPayload(BaseModel):
     token_type: str
     exp: datetime
     iat: Optional[datetime]
-    sub: int
+    sub: str
 
 
 class Token(BaseModel):
