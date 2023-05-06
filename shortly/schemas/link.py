@@ -1,12 +1,15 @@
 """This module defines a Pydantic schema for a Link object."""
 
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, TypeAlias
 
 from pydantic import AnyUrl, BaseModel, constr
 
 if TYPE_CHECKING:
     from .user import UserInDB
+
+
+KeyType: TypeAlias = constr(min_length=7, max_length=7, regex=r"[^\W_]+$")
 
 
 class LinkBase(BaseModel):
@@ -18,7 +21,7 @@ class LinkIn(LinkBase):
 
 
 class LinkOut(LinkBase):
-    short_key: constr(min_length=7, max_length=7, regex=r"[^\W_]+$")
+    short_key: KeyType
     create_date: datetime
     expiry_date: Optional[datetime]
     last_access_date: datetime

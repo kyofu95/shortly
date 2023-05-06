@@ -1,11 +1,11 @@
 """This module contains routing for the Links API."""
 
+from datetime import datetime
 import random
 import string
 
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
-from pydantic import constr
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,6 @@ from shortly.core.database import get_session
 from shortly.models.link import Link as LinkModel
 from shortly.models.user import User as UserModel
 import shortly.schemas.link as link_schemas
-import shortly.schemas.user as user_schemas
 from .auth import get_current_user
 
 router = APIRouter(prefix="/links", tags=["Links"])
@@ -48,13 +47,22 @@ async def create_link(
 
 
 @router.get("", response_model=list[link_schemas.LinkOut], status_code=status.HTTP_200_OK)
-async def get_all_links(user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
-    return user.links
+async def get_all_links(
+    include_disabled: bool = False,
+    user: UserModel = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    filter_q = []
+    if not include_disabled:
+        filter_q.append(LinkModel.disabled.is_(False))
+
+    results = await session.execute(select(LinkModel).where(LinkModel.user_id == user.id).filter(*filter_q))
+    return results.scalars().all()
 
 
-@router.get("/key", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+@router.get("/{key}", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
 async def get_link(
-    key: constr(min_length=7, max_length=7, regex=r"[^\W_]+$"),
+    key: link_schemas.KeyType,
     user: UserModel = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -62,4 +70,42 @@ async def get_link(
     db_link = results.scalar()
     if not db_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
+    return db_link
+
+
+@router.post("/{key}/disable", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+async def disable_link(
+    key: link_schemas.KeyType, user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)
+):
+    results = await session.execute(select(LinkModel).where(LinkModel.short_key == key))
+    db_link = results.scalar()
+    if not db_link:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
+    if db_link.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="")
+    if db_link.disabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Link is already disabled")
+
+    db_link.disabled = True
+    db_link.last_access_date = datetime.now()
+    await session.commit()
+    return db_link
+
+
+@router.post("/{key}/enable", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+async def enable_link(
+    key: link_schemas.KeyType, user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)
+):
+    results = await session.execute(select(LinkModel).where(LinkModel.short_key == key))
+    db_link = results.scalar()
+    if not db_link:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
+    if db_link.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="")
+    if not db_link.disabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Link is already enabled")
+
+    db_link.disabled = False
+    db_link.last_access_date = datetime.now()
+    await session.commit()
     return db_link
