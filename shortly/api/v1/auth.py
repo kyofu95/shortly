@@ -52,12 +52,14 @@ async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-async def get_current_user_from_token(token: str, session: AsyncSession) -> UserInDB:
+async def get_current_user_from_token(token: str, session: AsyncSession) -> UserModel:
     # decode token
     try:
         payload_dict = jwt.decode(token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         payload = TokenPayload(**payload_dict)
-    except (JWTClaimsError, ExpiredSignatureError, JWTError) as exc:
+    except ExpiredSignatureError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been expired") from exc
+    except (JWTClaimsError, JWTError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token") from exc
 
     # verify user
@@ -68,10 +70,10 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
-    return UserInDB(**db_user.dict())
+    return db_user
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
-) -> UserInDB:
+) -> UserModel:
     return await get_current_user_from_token(token, session)
