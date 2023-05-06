@@ -3,18 +3,22 @@
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 
-from pydantic import BaseModel, constr
+from pydantic import AnyUrl, BaseModel, constr
 
 if TYPE_CHECKING:
     from .user import UserInDB
 
 
 class LinkBase(BaseModel):
-    short_key: constr(min_length=7, max_length=7)
-    original_url: str
+    original_url: AnyUrl
+
+
+class LinkIn(LinkBase):
+    pass
 
 
 class LinkOut(LinkBase):
+    short_key: constr(min_length=7, max_length=7, regex=r"[^\W_]+$")
     create_date: datetime
     expiry_date: Optional[datetime]
     last_access_date: datetime

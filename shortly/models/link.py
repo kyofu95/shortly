@@ -27,7 +27,7 @@ class Link(Base):
     create_date: Mapped[datetime] = mapped_column(default=func.now())
     expiry_date: Mapped[Optional[datetime]]
     last_access_date: Mapped[datetime] = mapped_column(default=func.now())
-    view_count: Mapped[int]
+    view_count: Mapped[int] = mapped_column(default=0)
     disabled: Mapped[bool] = mapped_column(default=False)
 
     user: Mapped["User"] = relationship(back_populates="links", lazy="selectin")
