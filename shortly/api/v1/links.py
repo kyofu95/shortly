@@ -82,7 +82,7 @@ async def disable_link(
     if not db_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
     if db_link.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Link belongs to another user")
     if db_link.disabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Link is already disabled")
 
@@ -101,7 +101,7 @@ async def enable_link(
     if not db_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
     if db_link.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Link belongs to another user")
     if not db_link.disabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Link is already enabled")
 

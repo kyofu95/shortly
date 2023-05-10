@@ -58,9 +58,17 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
         payload_dict = jwt.decode(token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         payload = TokenPayload(**payload_dict)
     except ExpiredSignatureError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been expired") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
     except (JWTClaimsError, JWTError) as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
 
     # verify user
     results = await session.execute(
@@ -68,7 +76,11 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
     )
     db_user = results.scalar()
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return db_user
 
