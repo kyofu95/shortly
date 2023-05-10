@@ -93,4 +93,6 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
 async def get_current_user(
     token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
 ) -> UserModel:
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
     return await get_current_user_from_token(token, session)
