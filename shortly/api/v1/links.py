@@ -16,12 +16,23 @@ from shortly.models.user import User as UserModel
 import shortly.schemas.link as link_schemas
 from .auth import get_current_user
 
-router = APIRouter(prefix="/links", tags=["Links"])
+router = APIRouter(
+    prefix="/links",
+    tags=["Links"],
+    responses={
+        401: {"description": "Unauthorized"},
+    },
+)
 
 ALPHANUMERIC: str = string.ascii_letters + string.digits
 
 
-@router.post("", response_model=link_schemas.LinkOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=link_schemas.LinkOut,
+    status_code=status.HTTP_200_OK,
+    responses={500: {"description": "Internal server error"}},
+)
 async def create_link(
     new_link: link_schemas.LinkIn,
     user: UserModel = Depends(get_current_user),
@@ -60,7 +71,12 @@ async def get_all_links(
     return results.scalars().all()
 
 
-@router.get("/{key}", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+@router.get(
+    "/{key}",
+    response_model=link_schemas.LinkOut,
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "Not found"}},
+)
 async def get_link(
     key: link_schemas.KeyType,
     user: UserModel = Depends(get_current_user),
@@ -73,7 +89,12 @@ async def get_link(
     return db_link
 
 
-@router.post("/{key}/disable", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+@router.post(
+    "/{key}/disable",
+    response_model=link_schemas.LinkOut,
+    status_code=status.HTTP_200_OK,
+    responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}},
+)
 async def disable_link(
     key: link_schemas.KeyType, user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)
 ):
@@ -92,7 +113,12 @@ async def disable_link(
     return db_link
 
 
-@router.post("/{key}/enable", response_model=link_schemas.LinkOut, status_code=status.HTTP_200_OK)
+@router.post(
+    "/{key}/enable",
+    response_model=link_schemas.LinkOut,
+    status_code=status.HTTP_200_OK,
+    responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}},
+)
 async def enable_link(
     key: link_schemas.KeyType, user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)
 ):

@@ -11,10 +11,19 @@ from shortly.models.user import User as UserModel
 import shortly.schemas.user as user_schemas
 from .auth import get_current_user
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+)
 
 
-@router.post("", response_model=user_schemas.UserOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=user_schemas.UserOut,
+    status_code=status.HTTP_200_OK,
+    name="create a new user",
+    responses={400: {"description": "Bad request"}},
+)
 async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession = Depends(get_session)):
     # check if user already exists and active
     results = await session.execute(
@@ -36,7 +45,12 @@ async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession =
 
 
 @router.get(
-    "/me", response_model=user_schemas.UserOut, response_model_exclude={"links"}, status_code=status.HTTP_200_OK
+    "/me",
+    response_model=user_schemas.UserOut,
+    response_model_exclude={"links"},
+    status_code=status.HTTP_200_OK,
+    name="get current user",
+    responses={401: {"description": "Unauthorized"}},
 )
 async def get_user_me(user: UserModel = Depends(get_current_user)):
     return user

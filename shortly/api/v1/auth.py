@@ -22,7 +22,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 router = APIRouter(tags=["OAuth2"])
 
 
-@router.post("/token", response_model=Token)
+@router.post(
+    "/token",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    responses={401: {"description": "Unauthorized"}, 500: {"description": "Internal server error"}},
+)
 async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     # verify if user exists
     results = await session.execute(

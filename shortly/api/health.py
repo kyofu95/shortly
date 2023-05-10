@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shortly.core.database import get_session
 import shortly.schemas.health as health_schemas
 
-router = APIRouter(prefix="/health", tags=["Health"])
+router = APIRouter(prefix="/health", tags=["Health"], responses={503: {"description": "Service unavailable"}})
 
 
 @router.get("", response_model=health_schemas.Health, status_code=status.HTTP_200_OK)
