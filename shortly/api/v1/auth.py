@@ -92,7 +92,12 @@ async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session:
     if not Hasher.verify_password(form.password, db_user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
-    return create_tokens(db_user.id)
+    token = create_tokens(db_user.id)
+
+    db_user.refresh_token = token.refresh_token
+    await session.commit()
+
+    return token
 
 
 async def get_current_user_from_token(token: str, token_type: str, session: AsyncSession) -> UserModel:
@@ -111,6 +116,13 @@ async def get_current_user_from_token(token: str, token_type: str, session: Asyn
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if token_type == "refresh_token" & db_user.refresh_token != token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token does not match the stored one",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

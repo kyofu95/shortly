@@ -25,5 +25,6 @@ class User(Base):
     password: Mapped[str] = mapped_column(String(60))
     create_at: Mapped[datetime] = mapped_column(default=func.now())
     disabled: Mapped[bool] = mapped_column(default=False)
+    refresh_token: Mapped[str] = mapped_column(default="")
 
     links: Mapped[list["Link"]] = relationship(back_populates="user", lazy="selectin")

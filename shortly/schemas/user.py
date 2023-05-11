@@ -40,6 +40,8 @@ class UserInDB(UserBase):
     create_at: datetime
     disabled: bool
 
+    refresh_token: str
+
     links: list["LinkInDB"] = []
 
     class Config:
