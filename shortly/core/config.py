@@ -20,7 +20,8 @@ class AppSettings(BaseSettings):
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRY: int = 25
+    JWT_ACCESS_TOKEN_EXPIRY: int = 25
+    JWT_REFRESH_TOKEN_EXPIRY: int = 90
 
     class Config:
         case_sensitive = True

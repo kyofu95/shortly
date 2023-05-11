@@ -17,4 +17,5 @@ class TokenPayload(BaseModel):
 class Token(BaseModel):
     """A Pydantic model representing a security token."""
     access_token: str
+    refresh_token: str
     token_type: str
