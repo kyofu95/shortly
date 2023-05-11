@@ -119,7 +119,7 @@ async def get_current_user_from_token(token: str, token_type: str, session: Asyn
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if token_type == "refresh_token" & db_user.refresh_token != token:
+    if token_type == "refresh_token" and db_user.refresh_token != token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Refresh token does not match the stored one",
