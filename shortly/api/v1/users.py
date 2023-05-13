@@ -2,14 +2,12 @@
 
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from shortly.core.database import get_session
-from shortly.core.security import Hasher
-from shortly.models.user import User as UserModel
+from shortly.repository.user import UserRepository
 import shortly.schemas.user as user_schemas
 from .auth import get_current_user
+from .deps import get_repository
+
 
 router = APIRouter(prefix="/users", tags=["Users"], responses={400: {"description": "Bad request"}})
 
@@ -20,22 +18,19 @@ router = APIRouter(prefix="/users", tags=["Users"], responses={400: {"descriptio
     status_code=status.HTTP_201_CREATED,
     name="create a new user",
 )
-async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession = Depends(get_session)):
+async def create_user(
+    new_user: user_schemas.UserCreate,
+    user_repository: UserRepository = Depends(get_repository(UserRepository)),
+):
+    """Create a new user."""
+
     # check if user already exists and active
-    results = await session.execute(
-        select(UserModel).where((UserModel.login == new_user.login) & (UserModel.disabled.is_(False)))
-    )
-    db_user = results.scalar()
+    db_user = await user_repository.get_by_login(new_user.login)
     if db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this login already exists")
 
     # create user
-    hashed_password = Hasher.get_password_hash(new_user.password)
-
-    db_user = UserModel(login=new_user.login, password=hashed_password)
-    session.add(db_user)
-    await session.commit()
-    await session.refresh(db_user)
+    db_user = await user_repository.create(new_user.login, new_user.password)
 
     return db_user
 
@@ -48,7 +43,9 @@ async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession =
     name="get current user",
     responses={401: {"description": "Unauthorized"}},
 )
-async def get_user_me(user: UserModel = Depends(get_current_user)):
+async def get_user_me(user: user_schemas.UserInDB = Depends(get_current_user)):
+    """Get current user."""
+
     return user
 
 
@@ -57,7 +54,10 @@ async def get_user_me(user: UserModel = Depends(get_current_user)):
     status_code=status.HTTP_204_NO_CONTENT,
     responses={401: {"description": "Unauthorized"}},
 )
-async def delete_user(user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
-    user.disabled = True
-    user.refresh_token = ""
-    await session.commit()
+async def delete_user(
+    user: user_schemas.UserInDB = Depends(get_current_user),
+    user_repository: UserRepository = Depends(get_repository(UserRepository)),
+):
+    """Disables current user."""
+
+    await user_repository.disable(user.id)
