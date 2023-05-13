@@ -20,7 +20,7 @@ from shortly.schemas.user import UserInDB
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 
-router = APIRouter(tags=["OAuth2"])
+router = APIRouter(tags=["OAuth2"], responses={401: {"description": "Unauthorized"}})
 
 
 def create_token(token_type: str, delta: timedelta, user_id: int) -> str:
@@ -74,19 +74,16 @@ def create_tokens(user_id: int) -> Token:
     "/token",
     response_model=Token,
     status_code=status.HTTP_200_OK,
-    responses={401: {"description": "Unauthorized"}, 500: {"description": "Internal server error"}},
+    responses={500: {"description": "Internal server error"}},
 )
-async def get_access_token(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
-    # verify if user exists
+async def get_tokens(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+    # verify if user exists and is not disabled
     results = await session.execute(
         select(UserModel).where((UserModel.login == form.username) & (UserModel.disabled.is_(False)))
     )
     db_user = results.scalar()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
-
-    if db_user.disabled:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
 
     # validate password
     if not Hasher.verify_password(form.password, db_user.password):
@@ -145,6 +142,11 @@ async def get_current_user_with_refresh_token(
     return await get_current_user_from_token(refresh_token, "refresh_token", session)
 
 
-@router.post("/refresh-token", response_model=Token)
+@router.post(
+    "/refresh-token",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    responses={400: {"description": "Bad request"}},
+)
 async def get_refresh_token(current_user: UserModel = Depends(get_current_user_with_refresh_token)):
     return create_tokens(current_user.id)
