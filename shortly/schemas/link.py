@@ -25,6 +25,20 @@ class LinkIn(LinkBase):
 
 class LinkOut(LinkBase):
     short_key: KeyType
+
+    class Config:
+        orm_mode = True
+
+        schema_extra = {
+            "example": {
+                "original_url": "http://example.com",
+                "short_key": "hgrt67c",
+            }
+        }
+
+
+class LinkStats(LinkBase):
+    short_key: KeyType
     create_date: datetime
     expiry_date: Optional[datetime]
     last_access_date: datetime
@@ -36,6 +50,7 @@ class LinkOut(LinkBase):
 
         schema_extra = {
             "example": {
+                "original_url": "http://example.com",
                 "short_key": "hgrt67c",
                 "create_date": "2023-01-01T02:10:12.777785",
                 "expiry_date": "2024-01-01T02:10:12.777785",
@@ -46,7 +61,7 @@ class LinkOut(LinkBase):
         }
 
 
-class LinkInDB(LinkOut):
+class LinkInDB(LinkStats):
     id: int
     user_id: int
 
