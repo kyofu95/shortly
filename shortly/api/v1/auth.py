@@ -1,5 +1,4 @@
 """This module provides a function for acquiring an OAuth2 access token."""
-from datetime import timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
@@ -7,7 +6,6 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shortly.core.config import settings
 from shortly.core.database import get_session
 from shortly.core.security import Hasher, generate_token, decode_token, TokenType
 from shortly.models.user import User as UserModel
@@ -21,8 +19,8 @@ router = APIRouter(tags=["OAuth2"], responses={401: {"description": "Unauthorize
 
 def create_tokens(user_id: int) -> Token:
     try:
-        access_token = generate_token(TokenType.ACCESS, timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRY), user_id)
-        refresh_token = generate_token(TokenType.REFRESH, timedelta(hours=settings.JWT_REFRESH_TOKEN_EXPIRY), user_id)
+        access_token = generate_token(TokenType.ACCESS, user_id)
+        refresh_token = generate_token(TokenType.REFRESH, user_id)
     except ValueError as exc:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}

@@ -9,6 +9,9 @@ from pydantic import BaseSettings
 class AppSettings(BaseSettings):
     """Base settings class"""
 
+    TITLE: str = "Shortly"
+    VERSION: str = "0.5.0"
+
     ENVIRONMENT: str
     DEBUG: bool
 
@@ -21,7 +24,7 @@ class AppSettings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRY: int = 25
-    JWT_REFRESH_TOKEN_EXPIRY: int = 90
+    JWT_REFRESH_TOKEN_EXPIRY: int = 60 * 60 * 20
 
     class Config:
         case_sensitive = True

@@ -35,8 +35,13 @@ class Hasher:
         return Hasher.hash_context.verify(original_password, hashed_password)
 
 
-def generate_token(token_type: TokenType, delta: timedelta, user_id: int) -> str:
+def generate_token(token_type: TokenType, user_id: int) -> str:
     """Creates access or refresh token."""
+
+    if token_type is token_type.ACCESS:
+        delta = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRY)
+    else:  # token_type is token_type.REFRESH:
+        delta = timedelta(minutes=settings.JWT_REFRESH_TOKEN_EXPIRY)
 
     payload = TokenPayload(
         token_type=token_type.value,
