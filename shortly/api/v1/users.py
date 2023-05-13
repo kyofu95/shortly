@@ -11,18 +11,14 @@ from shortly.models.user import User as UserModel
 import shortly.schemas.user as user_schemas
 from .auth import get_current_user
 
-router = APIRouter(
-    prefix="/users",
-    tags=["Users"],
-)
+router = APIRouter(prefix="/users", tags=["Users"], responses={400: {"description": "Bad request"}})
 
 
 @router.post(
     "",
     response_model=user_schemas.UserOut,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
     name="create a new user",
-    responses={400: {"description": "Bad request"}},
 )
 async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession = Depends(get_session)):
     # check if user already exists and active
@@ -54,3 +50,14 @@ async def create_user(new_user: user_schemas.UserCreate, session: AsyncSession =
 )
 async def get_user_me(user: UserModel = Depends(get_current_user)):
     return user
+
+
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={401: {"description": "Unauthorized"}},
+)
+async def delete_user(user: UserModel = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
+    user.disabled = True
+    user.refresh_token = ""
+    await session.commit()
