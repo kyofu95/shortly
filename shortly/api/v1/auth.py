@@ -1,21 +1,17 @@
 """This module provides a function for acquiring an OAuth2 access token."""
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
-from jose.exceptions import ExpiredSignatureError, JWTClaimsError
-from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shortly.core.config import settings
 from shortly.core.database import get_session
-from shortly.core.security import Hasher
+from shortly.core.security import Hasher, generate_token, decode_token, TokenType
 from shortly.models.user import User as UserModel
-from shortly.schemas.token import Token, TokenPayload
-from shortly.schemas.user import UserInDB
+from shortly.schemas.token import Token
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
@@ -23,49 +19,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 router = APIRouter(tags=["OAuth2"], responses={401: {"description": "Unauthorized"}})
 
 
-def create_token(token_type: str, delta: timedelta, user_id: int) -> str:
-    payload = TokenPayload(
-        token_type=token_type,
-        exp=datetime.utcnow() + delta,
-        iat=datetime.utcnow(),
-        sub=str(user_id),
-    )
-
-    try:
-        token = jwt.encode(payload.dict(), key=settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    except JWTError as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token encode failure") from exc
-    return token
-
-
-def decode_token(token: str) -> TokenPayload:
-    try:
-        payload_dict = jwt.decode(token, key=settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        payload = TokenPayload(**payload_dict)
-    except ExpiredSignatureError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    except (JWTClaimsError, JWTError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate token",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    except ValidationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid payload in token",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    return payload
-
-
 def create_tokens(user_id: int) -> Token:
-    access_token = create_token("access_token", timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRY), user_id)
-    refresh_token = create_token("refresh_token", timedelta(hours=settings.JWT_REFRESH_TOKEN_EXPIRY), user_id)
+    try:
+        access_token = generate_token(TokenType.ACCESS, timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRY), user_id)
+        refresh_token = generate_token(TokenType.REFRESH, timedelta(hours=settings.JWT_REFRESH_TOKEN_EXPIRY), user_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}
+        ) from exc
 
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
