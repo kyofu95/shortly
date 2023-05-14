@@ -26,6 +26,11 @@ class AppSettings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRY: int = 25
     JWT_REFRESH_TOKEN_EXPIRY: int = 60 * 60 * 20
 
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOWED_ORIGINS: list[str] = ["*"]
+    CORS_ALLOWED_METHODS: list[str] = ["*"]
+    CORS_ALLOWED_HEADERS: list[str] = ["*"]
+
     class Config:
         case_sensitive = True
         allow_mutation = False
