@@ -1,6 +1,6 @@
 """This module contains routing for the Links API."""
 
-from fastapi import Depends, HTTPException, Response, status
+from fastapi import Depends, HTTPException, Response, Request, status
 from fastapi.routing import APIRouter
 
 from shortly.repository.link import LinkRepository, GenerationFailed, LinkDoesNotExists
@@ -28,6 +28,7 @@ router = APIRouter(
 )
 async def create_link(
     new_link: link_schema.LinkIn,
+    request: Request,
     response: Response,
     user: user_schema.UserInDB = Depends(get_current_user),
     link_repository: LinkRepository = Depends(get_repository(LinkRepository)),
@@ -38,8 +39,9 @@ async def create_link(
         db_link = await link_repository.create(new_link.original_url, user.id)
     except GenerationFailed as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from exc
-
-    response.headers["location"] = router.url_path_for("get_link", key=db_link.short_key)
+    
+    path = request.url_for("get_link", key=db_link.short_key)
+    response.headers["location"] = str(path)
     return db_link
 
 
