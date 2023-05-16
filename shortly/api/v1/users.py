@@ -5,8 +5,8 @@ from fastapi.routing import APIRouter
 
 from shortly.repository.user import UserRepository
 import shortly.schemas.user as user_schemas
-from .auth import get_current_user
-from .deps import get_repository
+from .Depends.oauth import get_current_user
+from .Depends.repo import get_repository
 
 
 router = APIRouter(prefix="/users", tags=["Users"], responses={400: {"description": "Bad request"}})

@@ -1,4 +1,4 @@
-"""This module contains Depends() helper functions."""
+"""This module contains repository helper function."""
 
 from typing import Callable, Type
 

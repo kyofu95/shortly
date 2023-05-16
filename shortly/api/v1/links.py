@@ -7,8 +7,8 @@ from shortly.repository.link import LinkRepository, LinkDoesNotExists
 import shortly.service.link as link_service
 import shortly.schemas.link as link_schema
 import shortly.schemas.user as user_schema
-from .auth import get_current_user
-from .deps import get_repository
+from .Depends.oauth import get_current_user
+from .Depends.repo import get_repository
 
 
 router = APIRouter(
