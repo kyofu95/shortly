@@ -1,8 +1,6 @@
 """This module provides repository for link data."""
 
 from datetime import datetime
-import string
-import random
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -20,30 +18,20 @@ class GenerationFailed(Exception):
     """Raised when no short key were created."""
 
 
-ALPHANUMERIC: str = string.ascii_letters + string.digits
-
-
 class LinkRepository(BaseRepository):
     """Repository responsible for CRUD operations on Links table."""
 
-    async def create(self, original_url: str, user_id: int) -> LinkInDB:
+    async def create(self, key: str, original_url: str, user_id: int) -> LinkInDB:
         """Generate short key and return a link."""
-        max_retries = 5
-        while True:
-            try:
-                key = "".join(random.choices(ALPHANUMERIC, k=7))
-                db_link = Link(short_key=key, original_url=original_url, user_id=user_id)
+        try:
+            db_link = Link(short_key=key, original_url=original_url, user_id=user_id)
 
-                self.session.add(db_link)
-                await self.session.commit()
-                await self.session.refresh(db_link)
-            except IntegrityError as exc:
-                await self.session.rollback()
-                max_retries -= 1
-                if not max_retries:
-                    raise GenerationFailed() from exc
-            else:
-                break
+            self.session.add(db_link)
+            await self.session.commit()
+            await self.session.refresh(db_link)
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise GenerationFailed() from exc
 
         return db_link
 

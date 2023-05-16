@@ -3,7 +3,8 @@
 from fastapi import Depends, HTTPException, Response, Request, status
 from fastapi.routing import APIRouter
 
-from shortly.repository.link import LinkRepository, GenerationFailed, LinkDoesNotExists
+from shortly.repository.link import LinkRepository, LinkDoesNotExists
+import shortly.service.link as link_service
 import shortly.schemas.link as link_schema
 import shortly.schemas.user as user_schema
 from .auth import get_current_user
@@ -36,10 +37,10 @@ async def create_link(
     """Create a new link."""
 
     try:
-        db_link = await link_repository.create(new_link.original_url, user.id)
-    except GenerationFailed as exc:
+        db_link = await link_service.create(new_link.original_url, user.id, link_repository)
+    except link_service.CreateLinkError as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from exc
-    
+
     path = request.url_for("get_link", key=db_link.short_key)
     response.headers["location"] = str(path)
     return db_link

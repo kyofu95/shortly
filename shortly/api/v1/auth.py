@@ -27,7 +27,7 @@ def create_tokens(user_id: int) -> Token:
             status.HTTP_401_UNAUTHORIZED, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}
         ) from exc
 
-    return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+    return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
 
 @router.post(
