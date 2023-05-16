@@ -1,3 +1,5 @@
+"""This module contains link service."""
+
 import string
 import random
 
@@ -9,10 +11,15 @@ MAX_NUM_OF_TRIES = 5
 
 
 class CreateLinkError(Exception):
-    pass
+    """Raised when lnik could not be created."""
 
 
 async def create(original_url: str, user_id: int, repo: LinkRepository) -> LinkInDB:
+    """"
+    Creates link.
+    Tries to iterate link generation when unique check fails.
+    """
+
     while True:
         retry_number = MAX_NUM_OF_TRIES
         try:
