@@ -53,9 +53,16 @@ class LinkRepository(BaseRepository):
         results = await self.session.execute(select(Link).where((Link.user_id == user_id) & (Link.disabled.is_(False))))
         return results.scalars().all()
 
-    async def get_by_key_and_user_id(self, link_key: str, user_id: int) -> LinkInDB | None:
+    async def get_by_key(self, link_key: str) -> LinkInDB | None:
         """Get a link by short key and user id."""
         results = await self.session.execute(
-            select(Link).where((Link.short_key == link_key) & (Link.user_id == user_id) & (Link.disabled.is_(False)))
+            select(Link).where((Link.short_key == link_key) & (Link.disabled.is_(False)))
         )
         return results.scalar()
+
+    async def increase_view_counter_by_key(self, link_key: str) -> None:
+        """Increases link view counter by one."""
+        db_link = await self.get_by_key(link_key)
+        db_link.view_count += 1
+
+        await self.session.commit()

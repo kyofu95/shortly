@@ -56,9 +56,6 @@ async def test_get_link(setup_client: AsyncClient, setup_user: dict[str, str]):
     auth_headers = setup_user
 
     response = await client.get("api/links/1234567")
-    assert response.status_code == 401
-
-    response = await client.get("api/links/1234567", headers=auth_headers)
     assert response.status_code == 404
 
     og_link = {"original_url": "http://example.com"}
@@ -68,7 +65,7 @@ async def test_get_link(setup_client: AsyncClient, setup_user: dict[str, str]):
 
     short_key = response.json()["short_key"]
 
-    response = await client.get(f"api/links/{short_key}", headers=auth_headers)
+    response = await client.get(f"api/links/{short_key}")
     assert response.status_code == 200
     assert response.json()["original_url"] == og_link["original_url"]
     assert response.json()["short_key"] == short_key
@@ -102,9 +99,6 @@ async def test_stats_link(setup_client: AsyncClient, setup_user: dict[str, str])
     auth_headers = setup_user
 
     response = await client.get("api/links/1234567/stats")
-    assert response.status_code == 401
-
-    response = await client.get("api/links/1234567/stats", headers=auth_headers)
     assert response.status_code == 404
 
     og_link = {"original_url": "http://example.com"}
@@ -114,7 +108,7 @@ async def test_stats_link(setup_client: AsyncClient, setup_user: dict[str, str])
 
     short_key = response.json()["short_key"]
 
-    response = await client.get(f"api/links/{short_key}/stats", headers=auth_headers)
+    response = await client.get(f"api/links/{short_key}/stats")
     assert response.status_code == 200
     assert response.json()["short_key"] == short_key
     assert response.json()["original_url"] == og_link["original_url"]

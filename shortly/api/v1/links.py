@@ -16,7 +16,6 @@ router = APIRouter(
     tags=["Links"],
     responses={
         400: {"description": "Bad request"},
-        401: {"description": "Unauthorized"},
     },
 )
 
@@ -25,7 +24,7 @@ router = APIRouter(
     "",
     response_model=link_schema.LinkOut,
     status_code=status.HTTP_201_CREATED,
-    responses={500: {"description": "Internal server error"}},
+    responses={401: {"description": "Unauthorized"}, 500: {"description": "Internal server error"}},
 )
 async def create_link(
     new_link: link_schema.LinkIn,
@@ -46,7 +45,12 @@ async def create_link(
     return db_link
 
 
-@router.get("", response_model=list[link_schema.LinkOut], status_code=status.HTTP_200_OK)
+@router.get(
+    "",
+    response_model=list[link_schema.LinkOut],
+    status_code=status.HTTP_200_OK,
+    responses={401: {"description": "Unauthorized"}},
+)
 async def get_all_links(
     user: user_schema.UserInDB = Depends(get_current_user),
     link_repository: LinkRepository = Depends(get_repository(LinkRepository)),
@@ -64,21 +68,23 @@ async def get_all_links(
 )
 async def get_link(
     key: link_schema.KeyType,
-    user: user_schema.UserInDB = Depends(get_current_user),
     link_repository: LinkRepository = Depends(get_repository(LinkRepository)),
 ):
     """Get specific link by a key."""
 
-    db_link = await link_repository.get_by_key_and_user_id(key, user.id)
+    db_link = await link_repository.get_by_key(key)
     if not db_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
+
+    await link_repository.increase_view_counter_by_key(key)
+
     return db_link
 
 
 @router.delete(
     "/{key}",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={404: {"description": "Not found"}},
+    responses={401: {"description": "Unauthorized"}, 404: {"description": "Not found"}},
 )
 async def delete_link(
     key: link_schema.KeyType,
@@ -101,12 +107,11 @@ async def delete_link(
 )
 async def get_stats(
     key: link_schema.KeyType,
-    user: user_schema.UserInDB = Depends(get_current_user),
     link_repository: LinkRepository = Depends(get_repository(LinkRepository)),
 ):
     """Get link statistics."""
 
-    db_link = await link_repository.get_by_key_and_user_id(key, user.id)
+    db_link = await link_repository.get_by_key(key)
     if not db_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find link by key {key}")
 
