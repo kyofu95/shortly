@@ -7,12 +7,14 @@ Shortly is a test rest api url shortener
 * Postgesql 15
 
 ## Setup
-> git clone https://github.com/kyofu95/shortly
-> cd shortly
-> cp .env.sample .env
-> Edit your .env file and all the credentials
-> docker-compose -f docker-compose.yml up
-> check localhost:8000/docs
+```bash
+git clone https://github.com/kyofu95/shortly
+cd shortly
+cp .env.sample .env
+Edit your .env file and all the credentials
+docker-compose -f docker-compose.yml up
+check localhost:8000/docs
+```
 
 ## API Documentation
 View the API endpoint docs by visiting 👉 http://localhost:8000/docs
