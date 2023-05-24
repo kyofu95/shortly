@@ -17,7 +17,7 @@ class AppSettings(BaseSettings):
 
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
-    POSTGRES_DATABASE: str
+    POSTGRES_DB: str
     POSTGRES_HOST: str
     POSTGRES_PORT: int
 

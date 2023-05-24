@@ -13,7 +13,7 @@ connection_uri = URL.create(
     password=settings.POSTGRES_PASSWORD,
     host=settings.POSTGRES_HOST,
     port=settings.POSTGRES_PORT,
-    database=settings.POSTGRES_DATABASE,
+    database=settings.POSTGRES_DB,
 )
 
 async_engine = create_async_engine(connection_uri, echo=True)

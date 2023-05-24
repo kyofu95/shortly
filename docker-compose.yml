@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 1s
+      timeout: 2s
+      retries: 10
+    networks:
+      services-network:
+        aliases:
+          - db
+
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: sh -c "
+            alembic upgrade head &&
+            python3 -m uvicorn shortly.main:app --host 0.0.0.0 --port 8000"
+    volumes:
+      - ./shortly/:/app/shortly/
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    networks:
+      services-network:
+        aliases:
+          - web
+
+volumes:
+  postgres_data:
+
+networks:
+  services-network:
+    name: services-network
+    driver: bridge
