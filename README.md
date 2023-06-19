@@ -5,7 +5,7 @@ Shortly is a test rest api url shortener
 * Python 3.11
 * Poetry ^1.4.0
 * FastAPI 0.95
-* Postgesql 15
+* Postgresql 15
 
 ## Setup
 ```bash
