@@ -11,6 +11,7 @@ Shortly is a test rest api url shortener
 ```bash
 git clone https://github.com/kyofu95/shortly
 cd shortly
+poetry install
 cp .env.sample .env
 Edit your .env file and set the variables
 docker-compose -f docker-compose.yml up
