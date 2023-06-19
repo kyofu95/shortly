@@ -3,6 +3,7 @@ Shortly is a test rest api url shortener
 
 ## Prerequisites
 * Python 3.11
+* Poetry ^1.4.0
 * FastAPI 0.95
 * Postgesql 15
 
@@ -11,7 +12,7 @@ Shortly is a test rest api url shortener
 git clone https://github.com/kyofu95/shortly
 cd shortly
 cp .env.sample .env
-Edit your .env file and all the credentials
+Edit your .env file and all the variables
 docker-compose -f docker-compose.yml up
 check localhost:8000/docs
 ```
