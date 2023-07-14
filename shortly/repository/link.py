@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from shortly.models.link import Link
+from shortly.models.link import Link, links_id_seq
 from shortly.schemas.link import LinkInDB
 from .base import BaseRepository
 
@@ -21,10 +21,10 @@ class GenerationFailed(Exception):
 class LinkRepository(BaseRepository):
     """Repository responsible for CRUD operations on Links table."""
 
-    async def create(self, key: str, original_url: str, user_id: int) -> LinkInDB:
-        """Generate short key and return a link."""
+    async def create(self, link_id: int, key: str, original_url: str, user_id: int) -> LinkInDB:
+        """Create link and store it in a database."""
         try:
-            db_link = Link(short_key=key, original_url=original_url, user_id=user_id)
+            db_link = Link(id=link_id, short_key=key, original_url=original_url, user_id=user_id)
 
             self.session.add(db_link)
             await self.session.commit()
@@ -34,6 +34,11 @@ class LinkRepository(BaseRepository):
             raise GenerationFailed() from exc
 
         return db_link
+
+    async def get_id_from_sequence(self) -> int:
+        """Retrieves the next value from the links_id_seq sequence and returns it as an integer."""
+        results = await self.session.execute(select(links_id_seq.next_value()))
+        return results.scalar_one()
 
     async def disable_by_key_and_user_id(self, link_key: str, user_id: int) -> None:
         """Disable already existing link by key and user id."""
