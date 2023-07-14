@@ -27,9 +27,7 @@ def encode_base62(number: int) -> str:
 
 
 async def create(original_url: str, user_id: int, repo: LinkRepository) -> LinkInDB:
-    """ "
-    Creates link.
-    """
+    """Creates link."""
 
     link_id = await repo.get_id_from_sequence()
 
