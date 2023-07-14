@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .user import UserInDB
 
 
-KeyType: TypeAlias = constr(min_length=7, max_length=7, regex=r"[^\W_]+$")
+KeyType: TypeAlias = constr(min_length=4, max_length=7, regex=r"[^\W_]+$")
 
 
 class LinkBase(BaseModel):
