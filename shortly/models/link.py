@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Callable, Optional, TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, func, String
+from sqlalchemy import ForeignKey, func, String, Sequence
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -14,13 +14,15 @@ if TYPE_CHECKING:
 
     func: Callable
 
+links_id_seq = Sequence("links_id_seq", start=500_000)
+
 
 class Link(Base):
     """Represents 'links' database table."""
 
     __tablename__ = "links"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(links_id_seq, primary_key=True)
     short_key: Mapped[str] = mapped_column(String(7), unique=True, index=True)
     original_url: Mapped[str] = mapped_column()
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
